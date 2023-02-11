@@ -145,6 +145,49 @@ progressbar.place_forget()
 
 
 
+
+#Update Now
+def check_updates():
+    terminal = None
+    for t in terminals:
+        if os.system(f"which {t}") == 0:
+            terminal = t
+            break
+
+    if terminal:
+        subprocess.call([terminal, "-e",  "/home/" + username + "/.config/dsm/scripts/updatenow"])
+        progressbar.stop()
+        app.after(1000, lambda: progressbar.place_forget())
+    else:
+        print("No supported terminal found.")
+
+def start_progress_bar_check():
+    progressbar.place(x=390, y=586)
+    progressbar.start()
+    thread = threading.Thread(target=check_updates)
+    thread.start()        
+        
+def button_function(): 
+    print("button pressed")
+
+
+
+
+button = customtkinter.CTkButton(app, border_color="#0f94d2",  text_color=("#DCE4EE", "#DCE4EE"), border_width=0, corner_radius=4, text=f"Update Now", command=start_progress_bar_check)
+button.place(x=35, y=20)
+
+
+
+
+
+
+
+
+
+
+
+
+
 class MyTabView(customtkinter.CTkTabview):
     def __init__(app, master, **kwargs):
         super().__init__(master, **kwargs)

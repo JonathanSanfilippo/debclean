@@ -36,8 +36,8 @@ get_updates(){
     
 }
 
-write_updates(){
- 
+
+get_updates 
     if [ "$updates" -eq 1 ]; then
         echo "$updates package upgradable" > "$url"
         echo "" >> "$url"
@@ -60,12 +60,4 @@ write_updates(){
          echo "last check at $(date +'%F %T')" >> "$url"
     fi
 
-}
 
-
-while true; do
-    get_updates
-    write_updates
-    sleep "$CHECK"
-    get_updates
-done
