@@ -1,0 +1,53 @@
+#!/bin/bash
+
+
+
+
+
+#url
+url="$HOME/.config/dsm/data/console.json"
+chSet="$HOME/.config/dsm/data/checkSet.json"
+
+
+#var
+CHECK=$( expr "$(cat $chSet)" \* 60) 
+
+get_updates(){
+    num=$(apt list --upgradable) 
+    updates=$(apt list --upgradable | grep -c upgradable)
+    
+}
+
+write_updates(){
+ 
+    if [ "$updates" -eq 1 ]; then
+        echo "$updates package upgradable" > "$url"
+        echo "" >> "$url"
+        echo "$num" >> "$url" 
+        notify-send -i "$ICON" "Update available" "There are $updates update available" -u critical
+
+
+
+
+    elif [ "$updates" -ge 1 ]; then
+        echo "$updates packages upgradable" > "$url"
+        echo "" >> "$url"
+        echo "$num" >> "$url" 
+        notify-send -i "$ICON" "Updates available" "There are $updates updates available" -u critical
+
+
+    else
+
+         echo "system updated" > "$url"
+         echo "last check at $(date +'%F %T')" >> "$url"
+    fi
+
+}
+
+
+while true; do
+    get_updates
+    write_updates
+    sleep "$CHECK"
+    get_updates
+done

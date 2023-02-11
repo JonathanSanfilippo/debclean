@@ -21,6 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#apt install python3-pil, python3-tk, pip, jq, git, wget, python3, libnotify-bin (pip: customtkinter, psutil)
  
 
 import threading
@@ -45,17 +46,17 @@ import socket
 username = getpass.getuser()
 hostname = socket.gethostname()
 
-#root-(app)-dsm v1.00
-app = customtkinter.CTk(className='Debian System Management') 
+#app-(app)-dsm v1.00
+app = customtkinter.CTk(className='debclean') 
 app.geometry(f"{1020}x{650}")
 app.minsize(1020, 650)
 app.maxsize(1020, 650)
-
+ 
 
 def title_status():
     app.title(f"{username}@{hostname}")
     app.after(1000, title_status)
-app.title(f"debclean - Debian System Management")  
+app.title(f"debclean")  
 app.after(1000, title_status)
 
 #icons
@@ -119,12 +120,12 @@ app.panel_frame = customtkinter.CTkFrame(app, width=170, height=390, corner_radi
 app.panel_frame.place(x=825, y=10)
 
 
-logo = customtkinter.CTkImage(light_image=Image.open("/home/" + username + "/.config/dsm/icons/app-logo.png"),
-                                  dark_image=Image.open("/home/" + username + "/.config/dsm/icons/app-logo.png"),
-                                  size=(100, 80))
+#logo = customtkinter.CTkImage(light_image=Image.open("/home/" + username + "/.config/dsm/icons/app-logo.png"),
+#                                  dark_image=Image.open("/home/" + username + "/.config/dsm/icons/app-logo.png"),
+#                                  size=(100, 80))
 
-label003 = customtkinter.CTkLabel(app, image=logo, text=" ", fg_color=('#dbdbdb','#2b2b2b') )
-label003.place(x=56, y=279)
+#label003 = customtkinter.CTkLabel(app, image=logo, text=" ", fg_color=('#dbdbdb','#2b2b2b') )
+#label003.place(x=56, y=279)
  
 
 
@@ -163,6 +164,8 @@ class MyTabView(customtkinter.CTkTabview):
         app.add(" Console ")
         app.add(f" Processes ({num_lines})")
         app.add(" dpkg Log ")
+        
+        
         
         
         # Console
@@ -235,7 +238,6 @@ class MyTabView(customtkinter.CTkTabview):
             
             
          # SysLog
-       # os.system("cp -r /var/log/syslog.log /home/" + username + "/.config/dsm/data/syslog.log ")
         
         def copy_last_100_lines_of_file(src, dst):
             with open(src, "r") as src_file:
@@ -275,6 +277,40 @@ class MyTabView(customtkinter.CTkTabview):
         textbox3.place(x=0, y=0)
         textbox3.configure(state="disabled") # configure textbox to be read-only
         app.after(1000, update_textbox3)      
+ 
+
+# Carica il valore attuale dal file di configurazione
+def load_config_2():
+    with open("/home/" + username + "/.config/dsm/data/checkSet.json", 'r') as f:
+        return f.read()
+value_2 = load_config_2()
+
+
+# Scrive il nuovo valore nel file di configurazione
+def write_config_2(value_2):
+     with open("/home/" + username + "/.config/dsm/data/checkSet.json", 'w') as f:
+       f.write(value_2)
+
+# Funzione eseguita quando si seleziona un nuovo valore nell'opzione menù
+def optionmenu_callback_2(choice):
+    value_2 = choice
+    write_config_2(value_2)
+
+
+# Crea l'opzione menù
+text_var = tkinter.StringVar(value="Check every Min")
+
+label = customtkinter.CTkLabel(master=app,textvariable=text_var, width=120,height=25,fg_color=('#dbdbdb','#2b2b2b'))
+label.place(x=842, y=25)
+
+combobox_2 = customtkinter.CTkOptionMenu(master=app,dropdown_hover_color=("#3b8ed0","#06c"),
+                                         values=["60", "120", "180","1440"],
+                                         command=optionmenu_callback_2)
+combobox_2.place(x=840, y=48)
+combobox_2.set(load_config_2())  # imposta il valore iniziale
+
+
+
 
 
 
@@ -336,14 +372,14 @@ boot_partition_progress = customtkinter.CTkProgressBar(app, height=5,width=130, 
 boot_partition_progress.place(x=845, y=380)
 
 def count_installed_packages():
-    output = subprocess.run(['pikaur', '-Q'], stdout=subprocess.PIPE)
+    output = subprocess.run(["dpkg-query", "-f", "${binary:Package}\n", "-W"], stdout=subprocess.PIPE)
     packages = output.stdout.decode('utf-8').split('\n')
-    return len(packages)
+    return len(packages) - 1
 
 
 def update_kernel_info():
     kernel = platform.release()
-    kernel_label.configure(text="Kernel: {}".format(kernel))
+    kernel_label.configure(text=" {}".format(kernel))
     kernel_label.after(1000, update_kernel_info)
     
 kernel_label = customtkinter.CTkLabel(app, text="Kernel: ...", fg_color=('#dbdbdb','#2b2b2b'))
@@ -351,12 +387,12 @@ kernel_label.place(x=845, y=165)
 app.after(1000, update_kernel_info)
 
 def update_mirrorlist_info():
-    mirrorlist = subprocess.run(['bash', '-c', 'mirrorlist=$(cat /etc/pacman.d/mirrorlist | wc -l ); diff=$( expr $mirrorlist - 10); echo $diff'], capture_output=True, text=True)
+    mirrorlist = subprocess.run(['bash', '-c', 'count=$(grep -v "^#\|^$" /etc/apt/sources.list | wc -l); echo $count'], capture_output=True, text=True)
     diff = int(mirrorlist.stdout.strip())
-    mirrorlist_label.configure(text="Server Mirrors: {}".format(diff))
+    mirrorlist_label.configure(text="Repository: {}".format(diff))
     mirrorlist_label.after(1000, update_mirrorlist_info)
 
-mirrorlist_label = customtkinter.CTkLabel(app, text="Server Mirrors: ...", fg_color=('#dbdbdb','#2b2b2b'))
+mirrorlist_label = customtkinter.CTkLabel(app, text="Repository: ...", fg_color=('#dbdbdb','#2b2b2b'))
 mirrorlist_label.place(x=845, y=185)
 app.after(1000, update_mirrorlist_info)
 
